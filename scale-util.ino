@@ -1,5 +1,6 @@
 // define commands
 #define CMD_READ_WEIGHT "READ"
+#define CMD_TARE        "TARE"
 
 // variables
 ScaleCurrentWeight currentScaleCurrentWeight;
@@ -23,11 +24,50 @@ void scaleutilSwapBmsBytesEndian(byte *buffer, int size) {
   }
 }
 
+ScaleConfig scaleutilLoadScaleConfigFromEeprom() {
+  ScaleConfig scaleConfigLocal;
+  EEPROM.begin(512);
+  EEPROM.get(EEPROM_ADDRESS, scaleConfigLocal);
+  EEPROM.end();
+  return scaleConfigLocal;
+}
+
+void scaleutilSaveScaleConfigToEeprom(ScaleConfig scaleConfigLocal) {
+  EEPROM.begin(512);
+  EEPROM.put(EEPROM_ADDRESS, scaleConfigLocal);
+  EEPROM.commit();
+  EEPROM.end();
+}
+
+void scaleutilInitializeLoadCell() {
+  // get saved tare offnet and calibration factor (or write default values if the values does not exist)
+  scaleConfig = scaleutilLoadScaleConfigFromEeprom();
+  if (isnan(scaleConfig.tareOffset) || scaleConfig.tareOffset == 0.0 || isnan(scaleConfig.calibrationFactor) || scaleConfig.calibrationFactor == 0.0) {
+    Serial.println("No value found in EEPROM. Writing default values");
+    
+    // set tare offset first time, if not set previously (only fallback). But for accuracy taring is needed!
+    scaleConfig.tareOffset = INITIAL_TARE_OFFSET;
+    scaleConfig.calibrationFactor = INITIAL_CALIBRATION_FACTOR;
+    scaleutilSaveScaleConfigToEeprom(scaleConfig);
+  }
+  
+  LoadCell.begin();
+  LoadCell.setCalFactor(scaleConfig.calibrationFactor);
+  LoadCell.setTareOffset(scaleConfig.tareOffset);
+}
+
 bool scaleutilIsCommandReadWeight(const char *buffer, int size) {
   if (size < sizeof(CMD_READ_WEIGHT)) {
     return false;
   }
   return scaleutilArrayEquals(buffer, CMD_READ_WEIGHT, sizeof(CMD_READ_WEIGHT));
+}
+
+bool scaleutilIsCommandTare(const char *buffer, int size) {
+  if (size < sizeof(CMD_TARE)) {
+    return false;
+  }
+  return scaleutilArrayEquals(buffer, CMD_TARE, sizeof(CMD_TARE));
 }
 
 void scaleutilWriteScaleCurrentWeightToBuffer(byte *buffer, int size, ScaleCurrentWeight *scaleCurrentWeight) {
@@ -51,8 +91,27 @@ void scaleutilFillScaleCurrentWeight(ScaleCurrentWeight *scaleCurrentWeight) {
       scaleCurrentWeight -> currentBruttoGram = 15000; // initial demo value
     }
   } else {
-    // TODO: read from scale
+    // HX711
+    float readFloatValue = LoadCell.getData();
+    Serial.print("Raw Value: ");
+    Serial.println(readFloatValue);
+    scaleCurrentWeight -> currentBruttoGram = round(readFloatValue);
+    Serial.print("Rounded Value: ");
+    Serial.println(scaleCurrentWeight -> currentBruttoGram);
   }
+}
+
+void scaleutilTare() {
+  Serial.println("Taring...");  
+  //LoadCell.tare();
+  LoadCell.start(2000); // 2 sec for taring
+  scaleConfig.tareOffset = LoadCell.getTareOffset();
+  Serial.print("Tare Offset = ");
+  Serial.println(scaleConfig.tareOffset);
+  scaleutilSaveScaleConfigToEeprom(scaleConfig);
+  Serial.println("Taring finished and written to EEPROM");
+
+  scaleutilInitializeLoadCell();
 }
 
 void scaleutilSendScaleCurrentWeight() {

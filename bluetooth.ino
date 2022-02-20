@@ -44,6 +44,8 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 
         if (scaleutilIsCommandReadWeight(rxValue.data(), sizeof(rxValue))) {
           scaleutilSendScaleCurrentWeight();
+        } else if (scaleutilIsCommandTare) {
+          scaleutilTare();
         }
       }  
     }
