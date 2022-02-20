@@ -102,16 +102,20 @@ void scaleutilFillScaleCurrentWeight(ScaleCurrentWeight *scaleCurrentWeight) {
 }
 
 void scaleutilTare() {
-  Serial.println("Taring...");  
-  //LoadCell.tare();
-  LoadCell.start(2000); // 2 sec for taring
-  scaleConfig.tareOffset = LoadCell.getTareOffset();
-  Serial.print("Tare Offset = ");
-  Serial.println(scaleConfig.tareOffset);
-  scaleutilSaveScaleConfigToEeprom(scaleConfig);
-  Serial.println("Taring finished and written to EEPROM");
-
-  scaleutilInitializeLoadCell();
+  if (DEMO_MODE == 0) {
+    Serial.println("Taring...");
+    //LoadCell.tare();
+    LoadCell.start(2000); // 2 sec for taring
+    scaleConfig.tareOffset = LoadCell.getTareOffset();
+    Serial.print("Tare Offset = ");
+    Serial.println(scaleConfig.tareOffset);
+    scaleutilSaveScaleConfigToEeprom(scaleConfig);
+    Serial.println("Taring finished and written to EEPROM");
+    scaleutilInitializeLoadCell();
+  } else {
+    // DEMO MODE: set current Weight to default value
+    currentScaleCurrentWeight.currentBruttoGram = 15000; // initial demo value
+  }
 }
 
 void scaleutilSendScaleCurrentWeight() {

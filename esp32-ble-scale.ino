@@ -10,7 +10,7 @@
 #define SERVICE_UUID        "df469ada-185e-11ec-9621-0242ac130002"
 #define CHARACTERISTIC_UUID "e8f1aaac-185e-11ec-9621-0242ac130002"
 
-const int8_t DEMO_MODE = 0; // 1: demo mode on, 0: demo mode off
+const int8_t DEMO_MODE = 1; // 1: demo mode on, 0: demo mode off
 const int16_t EEPROM_ADDRESS = 0;
 const float INITIAL_TARE_OFFSET = 8424208;
 const float INITIAL_CALIBRATION_FACTOR = -4.13;
