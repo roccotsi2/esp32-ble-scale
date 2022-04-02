@@ -40,20 +40,9 @@ void scaleutilSaveScaleConfigToEeprom(ScaleConfig scaleConfigLocal) {
 }
 
 void scaleutilInitializeLoadCell() {
-  // get saved tare offnet and calibration factor (or write default values if the values does not exist)
-  scaleConfig = scaleutilLoadScaleConfigFromEeprom();
-  if (isnan(scaleConfig.tareOffset) || scaleConfig.tareOffset == 0.0 || isnan(scaleConfig.calibrationFactor) || scaleConfig.calibrationFactor == 0.0) {
-    Serial.println("No value found in EEPROM. Writing default values");
-    
-    // set tare offset first time, if not set previously (only fallback). But for accuracy taring is needed!
-    scaleConfig.tareOffset = INITIAL_TARE_OFFSET;
-    scaleConfig.calibrationFactor = INITIAL_CALIBRATION_FACTOR;
-    scaleutilSaveScaleConfigToEeprom(scaleConfig);
-  }
-  
-  LoadCell.begin();
-  LoadCell.setCalFactor(scaleConfig.calibrationFactor);
-  LoadCell.setTareOffset(scaleConfig.tareOffset);
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  scale.set_scale(calibration_factor); //This value is obtained by using the SparkFun_HX711_Calibration sketch
+  scale.set_offset(offset);
 }
 
 bool scaleutilIsCommandReadWeight(const char *buffer, int size) {
@@ -92,10 +81,10 @@ void scaleutilFillScaleCurrentWeight(ScaleCurrentWeight *scaleCurrentWeight) {
     }
   } else {
     // HX711
-    float readFloatValue = LoadCell.getData();
+    float valueGram = scale.get_units(20);
     Serial.print("Raw Value: ");
-    Serial.println(readFloatValue);
-    scaleCurrentWeight -> currentBruttoGram = round(readFloatValue);
+    Serial.println(valueGram);
+    scaleCurrentWeight -> currentBruttoGram = round(valueGram);
     Serial.print("Rounded Value: ");
     Serial.println(scaleCurrentWeight -> currentBruttoGram);
   }
@@ -104,9 +93,9 @@ void scaleutilFillScaleCurrentWeight(ScaleCurrentWeight *scaleCurrentWeight) {
 void scaleutilTare() {
   if (DEMO_MODE == 0) {
     Serial.println("Taring...");
-    //LoadCell.tare();
-    LoadCell.start(2000); // 2 sec for taring
-    scaleConfig.tareOffset = LoadCell.getTareOffset();
+    scale.tare(); 
+    //LoadCell.start(2000); // 2 sec for taring
+    scaleConfig.tareOffset = scale.get_offset();;
     Serial.print("Tare Offset = ");
     Serial.println(scaleConfig.tareOffset);
     scaleutilSaveScaleConfigToEeprom(scaleConfig);
