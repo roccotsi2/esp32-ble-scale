@@ -11,7 +11,7 @@
 #define CHARACTERISTIC_UUID "e8f1aaac-185e-11ec-9621-0242ac130002"
 
 #define calibration_factor -24.93 // 7.235 //This value is obtained using the SparkFun_HX711_Calibration sketch
-#define offset 31577
+#define offset 37549
 
 #define LOADCELL_DOUT_PIN  33
 #define LOADCELL_SCK_PIN  32
