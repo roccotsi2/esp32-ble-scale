@@ -13,8 +13,8 @@
 #define calibration_factor -24.93 // 7.235 //This value is obtained using the SparkFun_HX711_Calibration sketch
 #define offset 37549
 
-#define LOADCELL_DOUT_PIN  33
-#define LOADCELL_SCK_PIN  32
+#define LOADCELL_DOUT_PIN  33 // GPIO 33 (yellow)
+#define LOADCELL_SCK_PIN  32  // GPIO 32 (green)
 
 const int8_t DEMO_MODE = 0;  // 1: demo mode on, 0: demo mode off
 const int16_t EEPROM_ADDRESS = 0;
